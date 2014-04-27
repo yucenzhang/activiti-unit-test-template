@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
+	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
+	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+	<process id="myProcess" name="My process" isExecutable="true">
+
+		<startEvent id="request" name="Start" activiti:initiator="employeeName">
+			<extensionElements>
+				<activiti:formProperty id="numberOfDays" name="number of days"
+					type="long" required="true"></activiti:formProperty>
+				<activiti:formProperty id="startDate"
+					name="First day of holiday (dd-MM-yyy)" type="date" datePattern="dd-MM-yyyy hh:mm"
+					required="true"></activiti:formProperty>
+				<activiti:formProperty id="vacationMotivation"
+					name="Motivation" type="string"></activiti:formProperty>
+			</extensionElements>
+		</startEvent>
+
+		<sequenceFlow id="flow1" sourceRef="request" targetRef="handleRequest"></sequenceFlow>
+
+		<userTask id="handleRequest" name="Handle the request"
+			activiti:candidateGroups="management">
+			<extensionElements>
+				<activiti:formProperty id="vacationApproved"
+					name="Do you approve this vacation" type="enum" required="true">
+					<activiti:value id="true" name="Approve"></activiti:value>
+					<activiti:value id="false" name="Reject"></activiti:value>
+				</activiti:formProperty>
+				<activiti:formProperty id="managerMotivation"
+					name="Motivation" type="string"></activiti:formProperty>
+			</extensionElements>
+		</userTask>
+
+		<sequenceFlow id="flow2" sourceRef="handleRequest"
+			targetRef="requestApprovedDecision"></sequenceFlow>
+
+		<exclusiveGateway id="requestApprovedDecision" name="Request approved?"></exclusiveGateway>
+
+		<sequenceFlow id="flow3" sourceRef="requestApprovedDecision"
+			targetRef="sendApprovalMail"></sequenceFlow>
+
+		<task id="sendApprovalMail" name="Send confirmation e-mail"></task>
+
+		<sequenceFlow id="flow4" sourceRef="sendApprovalMail"
+			targetRef="theEnd1"></sequenceFlow>
+
+		<endEvent id="theEnd1" name="the End 1"></endEvent>
+		<sequenceFlow id="flow5" sourceRef="requestApprovedDecision"
+			targetRef="adjustVacationRequestTask">
+			<conditionExpression xsi:type="tFormalExpression">${vacationApproved == 'false'}</conditionExpression>
+		</sequenceFlow>
+
+		<userTask id="adjustVacationRequestTask" name="Adjust vacation request">
+			<documentation>
+				Your manager has disapproved your vacation request for ${numberOfDays} days.Reason: ${managerMotivation}
+			</documentation>
+			<extensionElements>
+				<activiti:formProperty id="numberOfDays" name="Number of days"
+					value="${numberOfDays}" type="long" required="true" />
+				<activiti:formProperty id="startDate"
+					name="First day of holiday (dd-MM-yyy)" value="${startDate}"
+					datePattern="dd-MM-yyyy hh:mm" type="date" required="true" />
+				<activiti:formProperty id="vacationMotivation"
+					name="Motivation" value="${vacationMotivation}" type="string" />
+				<activiti:formProperty id="resendRequest"
+					name="Resend vacation request to manager?" type="enum" required="true">
+					<activiti:value id="true" name="Yes" />
+					<activiti:value id="false" name="No" />
+				</activiti:formProperty>
+			</extensionElements>
+			<humanPerformer>
+				<resourceAssignmentExpression>
+					<formalExpression>${employeeName}</formalExpression>
+				</resourceAssignmentExpression>
+			</humanPerformer>
+		</userTask>
+		<sequenceFlow id="flow6" sourceRef="adjustVacationRequestTask"
+			targetRef="resendRequestDecision" />
+
+		<exclusiveGateway id="resendRequestDecision" name="Resend request?" />
+		<sequenceFlow id="flow7" sourceRef="resendRequestDecision"
+			targetRef="handleRequest">
+			<conditionExpression xsi:type="tFormalExpression">${resendRequest == 'true'}</conditionExpression>
+		</sequenceFlow>
+
+		<sequenceFlow id="flow8" sourceRef="resendRequestDecision"
+			targetRef="theEnd2">
+			<conditionExpression xsi:type="tFormalExpression">${resendRequest == 'false'}</conditionExpression>
+		</sequenceFlow>
+		<endEvent id="theEnd2" />
+
+	</process>
+	<bpmndi:BPMNDiagram id="BPMNDiagram_myProcess">
+		<bpmndi:BPMNPlane bpmnElement="myProcess" id="BPMNPlane_myProcess">
+			<bpmndi:BPMNShape bpmnElement="request" id="BPMNShape_request">
+				<omgdc:Bounds height="35.0" width="35.0" x="60.0" y="180.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="handleRequest"
+				id="BPMNShape_handleRequest">
+				<omgdc:Bounds height="35.0" width="35.0" x="210.0" y="180.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="requestApprovedDecision"
+				id="BPMNShape_theEnd">
+				<omgdc:Bounds height="35.0" width="35.0" x="400.0" y="183.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="sendApprovalMail" id="BPMNShape_theEnd">
+				<omgdc:Bounds height="35.0" width="35.0" x="400.0" y="183.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="theEnd1" id="BPMNShape_theEnd">
+				<omgdc:Bounds height="35.0" width="35.0" x="400.0" y="183.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</definitions>
